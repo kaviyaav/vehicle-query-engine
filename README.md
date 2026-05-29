@@ -10,53 +10,60 @@ For the database I used joined table inheritance, a shared vehicles table holds 
 
 **Stack**
 
-• FastAPI: Web framework
-• PostgreSQL: Database
-• Strawberry: GraphQL library
-• SQLAlchemy: ORM
-• Alembic: Database migrations
+- **FastAPI** — Web framework
+- **PostgreSQL** — Database
+- **Strawberry** — GraphQL library
+- **SQLAlchemy** — ORM
+- **Alembic** — Database migrations
 
 **Project structure**
 
-I ensure we follow the 12 factor app principles while structuring this project where configuration is separated from code application is self contained DB is treated as an resource that can be swapped easily.
+I ensure we follow the 12 factor app principles while structuring this project where 
+
+- Configuration is separated from code
+- Application is self contained
+- DB is treated as a resource that can be swapped easily
 
 The app folder is separated by as
-Models
-database session
-GraphQL schema
-and configuration live in their own module.
+
+- Models
+- Database session
+- GraphQL schema
+- Configuration each lives in their own module
 
 As I worked on tight deadline, I kept it minimal. In a production codebase, we can have a services layer between resolvers and the ORM with business logic, a repositories module for DB queries, and the GraphQL resolvers for mapping inputs and outputs. That would make unit testing easier and clear separation of functions between the layers.
 
 **Setup**
 
 **Docker**
+
 If you have Docker Desktop in your local running, you can easily run the app in below one command setting up the db, migrations, seeding script, and the API
 
+```bash
 docker compose up --build
-
-Open http://localhost:8000/graphql in any browser to validate.
+```
+Open **http://localhost:8000/graphql** in any browser to validate.
 
 **Local setup**
 
 If you do not have docker, please follow below commands, I have given the commands for windows as I used them. Please feel free to change commands if you are using ios or any other OS.
 
+```bash
 python -m venv .venv
-source .venv/bin/activate 
+.venv\Scripts\activate
 pip install -r requirements.txt
 cp .env.example .env
-
+```
 You need to install postgres local instance and have it running in a port
 
+```bash
 psql -U postgres -c "CREATE USER vqe_user WITH PASSWORD 'vqe_pass';"
 psql -U postgres -c "CREATE DATABASE vqe_db OWNER vqe_user;"
-
 alembic upgrade head
 python scripts/seed.py
-
 uvicorn app.main:app --reload
-
-Open http://localhost:8000/graphql in anybrowser to validate.
+```
+Open **http://localhost:8000/graphql** in any browser to validate.
 
 **Seeding script**
 
@@ -70,6 +77,7 @@ I have listed few queries below for trying it out.
 
 **List and filter bikes**
 
+```graphql
 {
   bikes(
     filters: { type: "Road", gears: { min: 5 } }
@@ -86,9 +94,11 @@ I have listed few queries below for trying it out.
     }
   }
 }
+```
 
 **Search across all vehicle types**
 
+```graphql
 {
   searchVehicles(keyword: "nova") {
     __typename
@@ -107,7 +117,7 @@ I have listed few queries below for trying it out.
     }
   }
 }
-
+```
 **Filtering**
 
 Every list query accepts a filters argument. Text filters like manufacturer and model do a partial case-insensitive match so searching "ast" will match "Astoria". Range filters use { min, max } and both are optional so you can do just a min or just a max.
@@ -124,8 +134,9 @@ Every response includes total, page, pageSize, and totalPages
 
 **Health checks**
 
-GET /health returns 200 if the server is running
-GET /status returns 200 if the server can reach the database
+GET /health — returns 200 if the server is running
+
+GET /status — returns 200 if the server can reach the database
 
 **Search implementation**
 
@@ -135,21 +146,21 @@ Search is implemented using PostgreSQL's ILIKE operator. Filtering, sorting, and
 
 The current tests covers only the main behaviors like listing, filtering, sorting, pagination, and cross type search as a sample. We can later expand to cover more scenarios like below:
 
-• Empty strings, special characters in search terms, and boundary values on range filters..
-• Invalid input handling
-• Each filter field checked individually
-• Performance, load, regression, code vulnerability, coverage, and other tests 
+- Empty strings, special characters in search terms, and boundary values on range filters
+- Invalid input handling
+- Each filter field checked individually
+- Performance, load, regression, code vulnerability, coverage, and other tests
 
 We have around 75% code coverage and can be expanded later to cover more scenarios as the project grows. To run the tests, run pytest in the project root.
 
 **How we can better structure in a real production service**
 
-• The GraphQL resolvers can be moved into a separate module.
-• Data Loader batching can be added to prevent potential N+1 query problems.
-• Authentication and authorization would be added as middleware with respective permissions handled at the GraphQL layer.
-• Asynchronous database sessions can be enabled using SQLAlchemy's async session.
-• Observability can be configured with logging, metrics, and tracing.
-• A CI CD pipeline can be built to run linting, type checking, and integration and performance load tests.
+- The GraphQL resolvers can be moved into a separate module
+- DataLoader batching can be added to prevent potential N+1 query problems
+- Authentication and authorization would be added as middleware with respective permissions handled at the GraphQL layer
+- Asynchronous database sessions can be enabled using SQLAlchemy's async session
+- Observability can be configured with logging, metrics, and tracing
+- A CI/CD pipeline can be built to run linting, type checking, and integration and performance load tests
 
 **Brainstorming**
 
